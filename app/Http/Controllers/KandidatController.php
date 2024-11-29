@@ -6,6 +6,7 @@ use App\Models\Kandidat;
 use Illuminate\Http\Request;
 use App\Models\Pilih;
 
+
 class KandidatController extends Controller
 {
     // Displaying data
@@ -27,7 +28,7 @@ class KandidatController extends Controller
             $query->where('nomor_urut', $nomor_urut);
         }
 
-        // Paginate the filtered results (5 items per page)
+        // Paginate the filtered results (8 items per page)
         $kandidats = $query->paginate(5);
 
         // Query for Pilih model (if needed for displaying choices or options)
@@ -39,6 +40,7 @@ class KandidatController extends Controller
         return view('kandidats.index', compact('dtpilih', 'kandidats', 'name'))->with('i', (request()->input('page', 1) - 1) * 5);
     }
 
+
     // Adding data
     public function create()
     {
@@ -48,7 +50,6 @@ class KandidatController extends Controller
 
     public function store(Request $request)
     {
-        // Validasi input form
         $request->validate([
             'nama_kandidat' => 'required|string|max:255',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -56,28 +57,28 @@ class KandidatController extends Controller
             'tempat_lahir' => 'required|string|max:255',
             'alamat' => 'required|string|max:255',
             'nomor_urut' => 'required|integer|unique:kandidat,nomor_urut',
+
         ]);
 
-        // Jika ada foto yang diupload
         if ($request->hasFile('foto')) {
-            // Menyimpan foto ke folder storage/app/public/images
-            $filename = $request->file('foto')->store('images', 'public');
+            $file = $request->file('foto');
+            $filename = time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('images'), $filename);
         } else {
             $filename = null;
         }
 
-        // Simpan data kandidat ke database
         Kandidat::create([
             'nama_kandidat' => $request->nama_kandidat,
-            'id_setting' => 1, // Set id_setting ke 1
-            'foto' => $filename, // Simpan nama file foto
+            'id_setting' => 1, // Set id_setting to 1
+            'foto' => $filename,
             'tanggal_lahir' => $request->tanggal_lahir,
             'tempat_lahir' => $request->tempat_lahir,
             'alamat' => $request->alamat,
             'nomor_urut' => $request->nomor_urut,
+    
         ]);
 
-        // Redirect setelah menyimpan data
         return redirect()->route('kandidats.index')->with('success', 'Kandidat created successfully.');
     }
 
@@ -95,9 +96,9 @@ class KandidatController extends Controller
         return view('kandidats.edit', compact('kandidat', 'name'));
     }
 
+
     public function update(Request $request, Kandidat $kandidat)
     {
-        // Validasi input form
         $request->validate([
             'nama_kandidat' => 'required|string|max:255',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -105,38 +106,28 @@ class KandidatController extends Controller
             'tempat_lahir' => 'required|string|max:255',
             'alamat' => 'required|string|max:255',
             'nomor_urut' => 'required|integer|unique:kandidat,nomor_urut,' . $kandidat->id_kandidat . ',id_kandidat',
+ 
         ]);
 
-        // Jika ada foto yang diupload
         if ($request->hasFile('foto')) {
-            // Menghapus foto lama jika ada
-            if ($kandidat->foto && file_exists(storage_path('app/public/' . $kandidat->foto))) {
-                unlink(storage_path('app/public/' . $kandidat->foto));
-            }
+            $file = $request->file('foto');
+            $filename = time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('images'), $filename);
 
-            // Menyimpan foto yang baru
-            $filename = $request->file('foto')->store('images', 'public');
+            $data = $request->all();
             $data['foto'] = $filename;
         } else {
             $data = $request->except('foto');
         }
 
-        // Menyimpan data kandidat yang telah diperbarui
-        $data['id_setting'] = 1; // Set id_setting ke 1
+        $data['id_setting'] = 1; // Set id_setting to 1
         $kandidat->update($data);
 
         return redirect()->route('kandidats.index')->with('success', 'Kandidat updated successfully.');
     }
-
     // Deleting data
     public function destroy(Kandidat $kandidat)
     {
-        // Hapus foto jika ada
-        if ($kandidat->foto && file_exists(storage_path('app/public/' . $kandidat->foto))) {
-            unlink(storage_path('app/public/' . $kandidat->foto));
-        }
-
-        // Hapus kandidat dari database
         $kandidat->delete();
 
         return redirect()->route('kandidats.index')->with('success', 'Kandidat deleted successfully.');
