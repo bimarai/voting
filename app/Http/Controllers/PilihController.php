@@ -3,93 +3,80 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kandidat;
-use Illuminate\Http\Request;
-use App\Models\Pilih;
 use App\Models\PemilihanDetail;
-use Illuminate\Support\Facades\DB;
 use App\Models\Login;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PilihController extends Controller
 {
     public function index(Request $request)
     {
-        $nama_kandidat = $request->input('nama_kandidat');
-        $nomor_urut = $request->input('nomor_urut');
-
+        $search = $request->input('search');
         $query = Kandidat::orderBy('nomor_urut', 'asc');
-
-        if ($nama_kandidat) {
-            $query->where('nama_kandidat', 'like', '%' . $nama_kandidat . '%');
+    
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_kandidat', 'like', '%' . $search . '%')
+                  ->orWhere('nomor_urut', 'like', '%' . $search . '%');
+            });
         }
-
-        if ($nomor_urut) {
-            $query->where('nomor_urut', $nomor_urut);
-        }
-
-        $dtpilih = $query->get();
+    
+        $dtpilih = $query->paginate(5); // Gunakan pagination jika data banyak
         $name = 'Halaman Voting';
-        $pesan = '';
-
-        // Cek apakah token sudah digunakan atau belum
+    
         $token = session()->get('user_token');
         $login = Login::where('token', $token)->first();
-
-        // Pastikan token status sesuai: 1 berarti aktif dan belum digunakan, 0 berarti sudah digunakan
-        $tokenStatus = $login ? $login->is_pakai : 1; // default ke 1 jika token tidak ditemukan
-
-        return view('Voting', compact('dtpilih', 'name', 'pesan', 'tokenStatus'));
+        $tokenStatus = $login ? $login->is_pakai : 1;
+    
+        return view('Voting', compact('dtpilih', 'name', 'tokenStatus'));
     }
 
     public function store($id_kandidat)
     {
         $token = session()->get('user_token');
-
-        // Cek apakah token masih bisa digunakan untuk memilih (is_pakai bernilai 1 berarti belum digunakan)
         $login = Login::where('token', $token)->first();
-
+        
         if (!$login || $login->is_pakai == 0) {
-            // Token tidak ditemukan atau sudah dipakai
             return redirect()->route('home.index')->with('error', 'Token Anda sudah digunakan atau tidak valid untuk memilih.');
         }
 
-        // Menyimpan suara ke PemilihanDetail
         PemilihanDetail::create([
             'id_kandidat' => $id_kandidat,
-            'id_pemilihan' => 1, // Anda bisa menyesuaikan dengan id pemilihan yang aktif
+            'id_pemilihan' => 1,
         ]);
 
-        // Tandai token sebagai sudah digunakan (is_pakai = 0)
         Login::where('token', $token)->update(['is_pakai' => 0]);
 
         return redirect()->route('Thanks')->with('success', 'Terima kasih telah memilih!');
     }
 
-    // menghitung jumlah data kandidat menggunakan livewire
-    public function hasilVoting()
+    public function hasilVoting(Request $request)
     {
+        $name = 'Hasil Pemilihan | Admin';
         $totalSuara = PemilihanDetail::count();
         $totalKandidat = Kandidat::count();
-        $name = 'Hasil Pemilihan | Admin';
-
+    
+        // Apply pagination on the query
         $hasilVoting = PemilihanDetail::select(
             'pemilihan_detail.id_kandidat',
             'kandidat.nama_kandidat',
             'kandidat.nomor_urut',
-            DB::raw('COUNT(*) as total_suara')
+            'kandidat.foto',
+            DB::raw('COUNT(pemilihan_detail.id_kandidat) as total_suara')
         )
-            ->join('kandidat', 'pemilihan_detail.id_kandidat', '=', 'kandidat.id_kandidat')
-            ->groupBy('pemilihan_detail.id_kandidat', 'kandidat.nama_kandidat', 'kandidat.nomor_urut')
-            ->orderBy('kandidat.nomor_urut')
-            ->get();
-
+        ->join('kandidat', 'pemilihan_detail.id_kandidat', '=', 'kandidat.id_kandidat')
+        ->groupBy('pemilihan_detail.id_kandidat', 'kandidat.nama_kandidat', 'kandidat.nomor_urut', 'kandidat.foto')
+        ->orderByDesc('total_suara')
+        ->paginate(5); // Paginate results with 5 items per page
+    
         return view('Hasil', compact('hasilVoting', 'name', 'totalSuara', 'totalKandidat'));
     }
+    
 
     public function hapusSemuaData()
     {
-        // Menghapus semua data di tabel pemilihan_detail
         PemilihanDetail::truncate();
-
         return redirect()->route('hasil.voting')->with('pesan', 'Semua data pemilihan telah dihapus.');
     }
 }

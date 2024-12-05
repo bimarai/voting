@@ -27,11 +27,12 @@ class HasilVoting extends Component
             'pemilihan_detail.id_kandidat',
             'kandidat.nama_kandidat',
             'kandidat.nomor_urut',
-            DB::raw('COUNT(*) as total_suara')
+            'kandidat.foto', // Tambahkan kolom foto
+            DB::raw('COUNT(pemilihan_detail.id_kandidat) as total_suara')
         )
             ->join('kandidat', 'pemilihan_detail.id_kandidat', '=', 'kandidat.id_kandidat')
-            ->groupBy('pemilihan_detail.id_kandidat', 'kandidat.nama_kandidat', 'kandidat.nomor_urut')
-            ->orderBy('kandidat.nomor_urut')
+            ->groupBy('pemilihan_detail.id_kandidat', 'kandidat.nama_kandidat', 'kandidat.nomor_urut', 'kandidat.foto')
+            ->orderBy('kandidat.nomor_urut', 'asc')
             ->get();
     }
 

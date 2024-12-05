@@ -6,40 +6,33 @@ use App\Models\Kandidat;
 use Illuminate\Http\Request;
 use App\Models\Pilih;
 
-
 class KandidatController extends Controller
 {
     // Displaying data
     public function index(Request $request)
     {
-        // Get search parameters
-        $nama_kandidat = $request->input('nama_kandidat');
-        $nomor_urut = $request->input('nomor_urut');
-
-        // Build the query for Kandidat model
-        $query = Kandidat::orderBy('id_kandidat', 'desc');
-
-        // Apply filters if they exist
-        if ($nama_kandidat) {
-            $query->where('nama_kandidat', 'like', '%' . $nama_kandidat . '%');
+        // Ambil parameter pencarian (search bisa untuk nama atau nomor urut)
+        $search = $request->input('search');
+    
+        // Query dasar untuk Kandidat
+        $query = Kandidat::query();
+    
+        // Filter pencarian jika input diberikan
+        if ($search) {
+            $query->where('nama_kandidat', 'LIKE', "%{$search}%")
+                  ->orWhere('nomor_urut', 'LIKE', "%{$search}%");
         }
-
-        if ($nomor_urut) {
-            $query->where('nomor_urut', $nomor_urut);
-        }
-
-        // Paginate the filtered results (8 items per page)
-        $kandidats = $query->paginate(5);
-
-        // Query for Pilih model (if needed for displaying choices or options)
+    
+        // Dapatkan hasil paginasi
+        $kandidats = $query->orderBy('id_kandidat', 'desc')->paginate(5);
+    
+        // Ambil data Pilih untuk keperluan lainnya
         $dtpilih = Pilih::orderBy('nomor_urut', 'asc')->get();
-
         $name = 'Daftar Kandidat | Admin';
-
-        // Return the view with the filtered and paginated candidates
+    
+        // Tampilkan view dengan data kandidat
         return view('kandidats.index', compact('dtpilih', 'kandidats', 'name'))->with('i', (request()->input('page', 1) - 1) * 5);
     }
-
 
     // Adding data
     public function create()
@@ -57,7 +50,6 @@ class KandidatController extends Controller
             'tempat_lahir' => 'required|string|max:255',
             'alamat' => 'required|string|max:255',
             'nomor_urut' => 'required|integer|unique:kandidat,nomor_urut',
-
         ]);
 
         if ($request->hasFile('foto')) {
@@ -76,7 +68,6 @@ class KandidatController extends Controller
             'tempat_lahir' => $request->tempat_lahir,
             'alamat' => $request->alamat,
             'nomor_urut' => $request->nomor_urut,
-    
         ]);
 
         return redirect()->route('kandidats.index')->with('success', 'Kandidat created successfully.');
@@ -96,7 +87,6 @@ class KandidatController extends Controller
         return view('kandidats.edit', compact('kandidat', 'name'));
     }
 
-
     public function update(Request $request, Kandidat $kandidat)
     {
         $request->validate([
@@ -106,7 +96,6 @@ class KandidatController extends Controller
             'tempat_lahir' => 'required|string|max:255',
             'alamat' => 'required|string|max:255',
             'nomor_urut' => 'required|integer|unique:kandidat,nomor_urut,' . $kandidat->id_kandidat . ',id_kandidat',
- 
         ]);
 
         if ($request->hasFile('foto')) {
@@ -125,24 +114,12 @@ class KandidatController extends Controller
 
         return redirect()->route('kandidats.index')->with('success', 'Kandidat updated successfully.');
     }
+
     // Deleting data
     public function destroy(Kandidat $kandidat)
     {
         $kandidat->delete();
 
         return redirect()->route('kandidats.index')->with('success', 'Kandidat deleted successfully.');
-    }
-
-    // Searching
-    public function search(Request $request)
-    {
-        $request->validate([
-            'nama_kandidat' => 'required|string|max:255',
-        ]);
-
-        $pesan = '';
-        $cari = Kandidat::where('nama_kandidat', 'LIKE', '%' . $request->nama_kandidat . '%')->get();
-
-        return view('Voting', compact('cari', 'pesan'));
     }
 }

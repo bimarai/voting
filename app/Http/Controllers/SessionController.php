@@ -16,29 +16,31 @@ class SessionController extends Controller
     }
 
     public function login(Request $request)
-    {
-        $validatedData = $request->validate([
-            'token' => 'required|string|max:255',
-        ]);
+{
+    // Validasi token input
+    $validatedData = $request->validate([
+        'token' => 'required|string|max:255',
+    ]);
 
-        // Temukan token yang valid (is_pakai = 2)
-        $data = Login::where('token', $validatedData['token'])->where('is_pakai', 2)->first();
+    // Temukan token yang valid (is_pakai = 2)
+    $data = Login::where('token', $validatedData['token'])->where('is_pakai', 2)->first();
 
-        if ($data) {
-            // Mark token sebagai digunakan (is_pakai = 1) ketika login
-            $data->is_pakai = 1;
-            $data->save();
+    if ($data) {
+        // Tandai token sebagai digunakan (is_pakai = 1)
+        $data->update(['is_pakai' => 1]);
 
-            // Simpan token di session
-            session()->put('user_token', $validatedData['token']);
+        // Simpan token di session
+        session()->put('user_token', $validatedData['token']);
 
-            return redirect()->action([HomeController::class, 'index']);
-        } else {
-            $name = 'Halaman Login';
-            $pesan = 'Token tidak Valid / Kadaluarsa';
-            return view("sesi.index", compact('name', 'pesan'));
-        }
+        // Redirect ke halaman voting
+        return redirect()->route('votingApp.index');
+    } else {
+        // Jika token tidak valid atau kadaluarsa
+        $name = 'Halaman Login';
+        $pesan = 'Token tidak valid atau sudah digunakan.';
+        return view("sesi.index", compact('name', 'pesan'));
     }
+}
 
 
     public function logout()

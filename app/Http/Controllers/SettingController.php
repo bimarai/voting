@@ -6,16 +6,18 @@ use App\Models\Setting;
 use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-
+use Illuminate\Support\Facades\Storage;
 
 class SettingController extends Controller
 {
+    // Menampilkan halaman edit setting
     public function edit(Setting $setting)
     {
         $name = 'Edit Setting';
         return view('Setting', compact('setting', 'name'));
     }
 
+    // Update pengaturan
     public function update(Request $request, Setting $setting)
     {
         // Validasi input
@@ -42,17 +44,15 @@ class SettingController extends Controller
         // Handle file upload logo
         if ($request->hasFile('logo')) {
             // Cek dan hapus logo lama jika ada
-            if ($setting->logo && file_exists(public_path('assets/' . $setting->logo))) {
-                unlink(public_path('assets/' . $setting->logo)); // Hapus logo lama
+            if ($setting->logo && Storage::exists('public/assets/' . $setting->logo)) {
+                Storage::delete('public/assets/' . $setting->logo); // Hapus logo lama
             }
 
             // Upload file logo baru
-            $file = $request->file('logo');
-            $filename = time() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('assets'), $filename);  // Pindahkan file logo ke folder assets
+            $path = $request->file('logo')->store('assets', 'public');  // Menyimpan di public/storage/assets
 
             // Menambahkan file logo ke data yang akan diupdate
-            $data['logo'] = $filename;
+            $data['logo'] = basename($path);  // Menyimpan nama file saja
         }
 
         // Update data setting
@@ -63,26 +63,30 @@ class SettingController extends Controller
             ->with('success', 'Setting updated successfully');
     }
 
+    // Menambahkan admin baru
     public function store(Request $request)
     {
+        // Validasi input admin
         $request->validate([
-            'nama_lengkap' => 'required',
+            'nama_lengkap' => 'required|string|max:255',
             'tanggal_lahir' => 'required|date',
-            'nik' => 'required|numeric',
-            'email' => 'required|email',
-            'username' => 'required|unique:admin,username',
-            'password' => 'required|min:8|confirmed', // Ensures password is confirmed
+            'nik' => 'required|numeric|digits:16|unique:,nik', // Validasi nik unik
+            'email' => 'required|email|unique:,email',         // Validasi email unik
+            'username' => 'required|string|max:50|unique:,username',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
+        // Membuat admin baru
         $admin = new Admin();
         $admin->nama_lengkap = $request->nama_lengkap;
         $admin->tanggal_lahir = $request->tanggal_lahir;
         $admin->nik = $request->nik;
         $admin->email = $request->email;
         $admin->username = $request->username;
-        $admin->password = $request->password; // Hash the password before saving
+        $admin->password = Hash::make($request->password); // Hash password sebelum disimpan
         $admin->save();
 
-        return redirect()->route('dashboard/admin.index')->with('success', 'Admin added successfully!');
+        // Redirect ke halaman daftar admin dengan pesan sukses
+        return redirect()->route('dashboard/kandidats.index')->with('success', 'Admin added successfully!');
     }
 }

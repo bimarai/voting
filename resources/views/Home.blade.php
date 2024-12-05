@@ -1,38 +1,47 @@
 @extends('templates.Header')
-<!-- @extends('templates.Navbar') -->
 
-<div class="container mx-auto px-5 py-10">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
     @forelse ($dtHome as $DataH)
         <!-- Welcome and Voting Message -->
-        <div class="w-full items-center flex flex-col md:flex-row justify-between text-center md:text-left">
-            <div class="mb-8 md:mb-0">
-                <h1 class="text-6xl font-bold text-blue-700 mb-4">{{ $DataH->nama_setting }}</h1>
-                <h2 class="text-4xl font-semibold text-gray-800">{{ $DataH->judul_pemilihan }}</h2>
-                <p class="mt-6 text-gray-700 text-xl leading-relaxed">
+        <div class="flex flex-col-reverse lg:flex-row items-center lg:items-start justify-between lg:space-x-10 text-center lg:text-left">
+            
+            <!-- Teks Sambutan -->
+            <div class="lg:w-1/2 space-y-6">
+                <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-blue-700 mb-4">
+                    {{ $DataH->nama_setting }}
+                </h1>
+                <h2 class="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-800">
+                    {{ $DataH->judul_pemilihan }}
+                </h2>
+                <p class="mt-4 text-gray-700 text-sm sm:text-base lg:text-lg leading-relaxed">
                     Selamat datang di sistem pemilihan digital sekolah kami! Anda memiliki hak suara yang penting 
                     dalam menentukan masa depan sekolah. Dengan memberikan suara, Anda berpartisipasi aktif dalam 
                     membentuk masa depan SMK 1 Purwokerto, sebuah sekolah yang berkomitmen mencetak lulusan yang 
                     siap bersaing di dunia industri. Setiap suara Anda adalah langkah menuju kemajuan bersama.
                 </p>
-                <p class="mt-4 text-gray-700 text-xl leading-relaxed">
+                <p class="text-gray-700 text-sm sm:text-base lg:text-lg leading-relaxed">
                     Ingatlah untuk memilih dengan bijak. Setiap pilihan Anda mencerminkan harapan, kontribusi, dan 
                     tanggung jawab kita bersama demi sekolah yang lebih baik. Gunakan hak pilih Anda dengan penuh 
                     kesadaran, karena setiap suara yang Anda berikan sangat berarti.
                 </p>
-                <a href="/votingApp">
+                <a href="/sesi">
                     <button
-                        class="px-10 py-4 hover:bg-blue-600 hover:text-white transition-colors duration-300 bg-blue-500 text-white mt-8 rounded-lg font-semibold">
+                        class="px-6 sm:px-8 py-3 sm:py-4 hover:bg-blue-600 hover:text-white transition-colors duration-300 bg-blue-500 text-white mt-6 rounded-lg font-semibold text-sm sm:text-base">
                         Mulai Memilih
                     </button>
                 </a>
             </div>
-            <div class="flex justify-center md:justify-end w-full md:w-auto">
-                <!-- Further Enlarged Logo Size with Larger Base and Responsive Adjustments -->
-                <img class="w-[1200px] md:w-[1000px] lg:w-[1100px] xl:w-[1300px] 2xl:w-[1500px]" src="{{ asset('assets/smk1.png') }}" alt="School Logo">
+
+            <!-- Gambar Logo -->
+            <div class="w-full lg:w-1/2 mb-10 lg:mb-0 flex justify-center lg:justify-end">
+                <img class="max-w-full h-auto rounded-lg shadow-md"
+                     src="{{ asset('storage/assets/' . $DataH->logo) }}" 
+                     alt="School Logo">
             </div>
         </div>
     @empty
-        <p class="text-center text-gray-700 text-xl">Data tidak tersedia saat ini.</p>
+        <p class="text-center text-gray-700 text-lg sm:text-xl">
+            Data tidak tersedia saat ini.
+        </p>
     @endforelse
 </div>
-

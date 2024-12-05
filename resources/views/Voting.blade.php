@@ -1,4 +1,4 @@
-@extends('templates.Header')
+@extends('templates.h1')
 
 <div class="py-8 bg-gray-100">
     <!-- Pesan Sukses atau Error -->
@@ -17,12 +17,9 @@
     <!-- Form Pencarian -->
     <div class="flex justify-center mb-6">
         <form action="{{ route('votingApp.index') }}" method="GET" class="flex items-center">
-            <input type="text" name="nama_kandidat" placeholder="Cari berdasarkan nama kandidat" 
+            <input type="text" name="search" placeholder="Cari nama kandidat atau nomor urut"
                    class="border border-gray-300 rounded-lg px-4 py-2 w-64"
-                   value="{{ request()->get('nama_kandidat') }}">
-            <input type="number" name="nomor_urut" placeholder="No"
-                   class="border border-gray-300 rounded-lg px-4 py-2 w-16 ml-4"
-                   value="{{ request()->get('nomor_urut') }}">
+                   value="{{ request()->get('search') }}">
             <button type="submit" class="ml-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg">
                 Cari
             </button>

@@ -4,37 +4,25 @@
 <div class="px-[10%] py-10">
     <div class="mb-6 flex justify-between items-center">
         <h2 class="text-3xl font-bold text-gray-800">Daftar Kandidat</h2>
-        <!-- Tombol Tambah Kandidat -->
-        <a href="{{ route('kandidats.create') }}" class="inline-block bg-green-500 text-white py-2 px-6 rounded-lg shadow-md hover:bg-green-600">
-            Tambah Kandidat
-        </a>
     </div>
 
     <!-- Pencarian Kandidat -->
     <div class="mb-6 p-4 bg-white rounded-lg shadow-md">
-        <form action="{{ route('kandidats.index') }}" method="GET" class="space-y-3 md:space-y-0 md:flex md:items-center md:space-x-4">
-            <!-- Input Nama Kandidat -->
-            <div class="flex flex-col md:flex-row md:items-center">
-                <label for="nama_kandidat" class="text-gray-700 font-semibold mr-2">Nama Kandidat:</label>
-                <input type="text" id="nama_kandidat" name="nama_kandidat" value="{{ request()->input('nama_kandidat') }}"
-                    class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Masukkan nama kandidat">
-            </div>
-            <!-- Input Nomor Urut -->
-            <div class="flex flex-col md:flex-row md:items-center">
-                <label for="nomor_urut" class="text-gray-700 font-semibold mr-2">Nomor Urut:</label>
-                <input type="number" id="nomor_urut" name="nomor_urut" value="{{ request()->input('nomor_urut') }}"
-                    class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="No Urut">
-            </div>
-            <!-- Tombol Cari -->
-            <button type="submit"
-                class="py-2 px-6 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600 transition duration-200">
+        <form action="{{ route('kandidats.index') }}" method="GET" class="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-4">
+            <input type="text" name="search" value="{{ request()->input('search') }}"
+                   class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
+                   placeholder="Cari nama kandidat atau nomor urut">
+            <button type="submit" 
+                    class="py-2 px-6 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600 transition duration-200">
                 Cari
             </button>
+            <a href="{{ route('kandidats.create') }}" class="inline-block bg-green-500 text-white py-2 px-6 rounded-lg shadow-md hover:bg-green-600">
+                Tambah Kandidat
+            </a>
         </form>
     </div>
 
+    <!-- Tabel Kandidat -->
     <div class="overflow-x-auto">
         <table class="min-w-full border border-gray-200 bg-white rounded-lg shadow-md">
             <thead class="bg-gray-100">
@@ -54,25 +42,44 @@
                     <tr class="hover:bg-gray-50 transition-colors duration-200">
                         <td class="p-3 border-b text-gray-700">{{ $kandidats->firstItem() + $key }}</td>
                         <td class="p-3 border-b">
-                            <img src="{{ asset('images/' . $dtKandidat->foto) }}" alt="Foto Kandidat"
-                                class="w-20 h-28 object-cover rounded shadow-md">
+                            <div class="w-16 h-20 sm:w-20 sm:h-28 overflow-hidden rounded shadow-md">
+                                <img src="{{ asset('images/' . $dtKandidat->foto) }}" alt="Foto Kandidat"
+                                    class="w-full h-full object-cover">
+                            </div>
                         </td>
                         <td class="p-3 border-b text-gray-700">{{ $dtKandidat->nama_kandidat }}</td>
                         <td class="p-3 border-b text-gray-700">{{ $dtKandidat->alamat }}</td>
-                        <td class="p-3 border-b text-gray-700">{{ $dtKandidat->tanggal_lahir }}</td>
+                        <td class="p-3 border-b text-gray-700">{{ \Carbon\Carbon::parse($dtKandidat->tanggal_lahir)->format('d-m-Y') }}</td>
                         <td class="p-3 border-b text-gray-700">{{ $dtKandidat->tempat_lahir }}</td>
                         <td class="p-3 border-b text-gray-700">{{ $dtKandidat->nomor_urut }}</td>
-                        <td class="p-3 border-b text-gray-700 space-x-1">
-                            <a href="{{ route('kandidats.show', $dtKandidat->id_kandidat) }}"
-                                class="inline-block bg-blue-500 text-white py-1 px-3 rounded-lg shadow-md hover:bg-blue-600">Detail</a>
-                            <a href="{{ route('kandidats.edit', $dtKandidat->id_kandidat) }}"
-                                class="inline-block bg-yellow-500 text-white py-1 px-3 rounded-lg shadow-md hover:bg-yellow-600">Edit</a>
-                            <form action="{{ route('kandidats.destroy', $dtKandidat->id_kandidat) }}" method="POST" class="inline-block">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="bg-red-500 text-white py-1 px-3 rounded-lg shadow-md hover:bg-red-600"
-                                    onclick="return confirm('Are you sure you want to delete this candidate?')">Delete</button>
-                            </form>
+                        <td class="p-3 border-b text-gray-700">
+                            <div class="flex justify-center space-x-3 items-center text-lg">
+                                <!-- Detail -->
+                                <a href="{{ route('kandidats.show', $dtKandidat->id_kandidat) }}" 
+                                   class="text-blue-500 hover:text-blue-700" 
+                                   title="Detail">
+                                    <i class="fas fa-info-circle"></i>
+                                </a>
+                                <!-- Edit -->
+                                <a href="{{ route('kandidats.edit', $dtKandidat->id_kandidat) }}" 
+                                   class="text-yellow-500 hover:text-yellow-700" 
+                                   title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <!-- Delete -->
+                                <form action="{{ route('kandidats.destroy', $dtKandidat->id_kandidat) }}" 
+                                      method="POST" 
+                                      class="inline-block"
+                                      onsubmit="return confirm('Apakah Anda yakin ingin menghapus kandidat ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" 
+                                            class="text-red-500 hover:text-red-700" 
+                                            title="Hapus">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @endforeach
@@ -90,7 +97,7 @@
 
         @foreach ($kandidats->getUrlRange(1, $kandidats->lastPage()) as $page => $url)
             <a href="{{ $url }} "
-                class="{{ $page == $kandidats->currentPage() ? 'bg-blue-500 text-white px-3 py-1 rounded-lg' : 'text-blue-500 font-medium hover:underline' }}">
+                class="{{ $page == $kandidats->currentPage() ? 'bg-blue-500 text-white px-3 py-1 rounded-lg' : 'text-blue-500 font-medium hover:underline' }} ">
                 {{ $page }}
             </a>
         @endforeach
