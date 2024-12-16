@@ -4,15 +4,19 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Hash;  // Pastikan untuk menggunakan hash saat menyimpan password
+use Illuminate\Support\Facades\Hash;
 
 class Admin extends Authenticatable
 {
     use Notifiable;
 
-    protected $table = 'admin';
-    public $timestamps = false;  // Atur sesuai kebutuhan
+    // Tentukan nama tabel secara eksplisit
+    protected $table = 'admin'; // Pastikan ini sesuai dengan nama tabel di database
 
+    // Nonaktifkan timestamps karena kolom created_at dan updated_at tidak ada
+    public $timestamps = false;
+
+    // Daftar kolom yang dapat diisi (mass assignable)
     protected $fillable = [
         'username',
         'email',
@@ -22,26 +26,27 @@ class Admin extends Authenticatable
         'nik',
     ];
 
+    // Kolom yang harus disembunyikan saat data diubah menjadi array atau JSON
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    // Jika Anda ingin meng-hash password sebelum disimpan ke database
-    public static function boot()
+    // Mutator untuk enkripsi password
+    public function setPasswordAttribute($value)
     {
-        parent::boot();
-
-        static::creating(function ($admin) {
-            // Enkripsi password sebelum disimpan ke database
-            if ($admin->password) {
-                $admin->password = Hash::make($admin->password);
-            }
-        });
+        $this->attributes['password'] = Hash::make($value);
     }
 
-    // Jika Anda ingin menambahkan cast, Anda bisa mengaktifkan bagian ini
-    // protected $casts = [
-    //     'email_verified_at' => 'datetime',
-    // ];
+    // Contoh fungsi accessor untuk nama lengkap (opsional)
+    public function getNamaLengkapAttribute($value)
+    {
+        return ucfirst($value); // Kapitalisasi nama lengkap
+    }
+
+    // Contoh fungsi mutator untuk username (opsional)
+    public function setUsernameAttribute($value)
+    {
+        $this->attributes['username'] = strtolower($value); // Simpan username dalam huruf kecil
+    }
 }

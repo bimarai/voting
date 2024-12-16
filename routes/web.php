@@ -9,82 +9,74 @@ use App\Http\Controllers\TokenController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AboutController;
-use App\Http\Middleware\CheckToken;
 
-// Halaman awal
-Route::get('/', function () {
-    return view('welcome');
-});
+// ==========================
+// Route tanpa middleware
+Route::get('/', fn() => redirect('/home'));
+Route::get('/home', [HomeController::class, 'index'])->name('home');
 
-// Rute untuk user dengan middleware CheckToken
-Route::middleware([CheckToken::class])->group(function () {
-    // Halaman Home
-    Route::get('/home', [HomeController::class, 'index'])->name('home');
+// ==========================
+// Halaman About
+Route::get('/about', [AboutController::class, 'index'])->name('about.index');
+
+// ==========================
+// Route dengan middleware CheckToken
+Route::middleware(['CheckToken'])->group(function () {
     Route::resource('/votingApp', PilihController::class);
-
-    // Halaman About
-    Route::get('/about', [AboutController::class, 'index'])->name('about.index');
-
-    // Rute untuk halaman Thanks
-    Route::get('/Thanks', function () {
-        return view('Thanks', ['name' => 'Thanks']);
-    })->name('Thanks');
-    
-    // Proses penyimpanan voting
     Route::post('/pilih/{id_kandidat}', [PilihController::class, 'store'])->name('votingApp.store');
 });
 
-// Rute untuk login token
+// ==========================
+// Rute untuk sesi login token
 Route::get('/sesi', [SessionController::class, 'index'])->name('sesi.index');
-Route::post('/sesi/login', [SessionController::class, 'login']);
-Route::post('/sesi/logout', [SessionController::class, 'logout'])->name('logout');
+Route::post('/sesi/login', [SessionController::class, 'login'])->name('sesi.login');
+Route::post('/sesi/logout', [SessionController::class, 'logout'])->name('sesi.logout');
 
 // ==========================
-// Rute Dashboard Admin
+// Rute Auth (Login, Register, Logout) Admin
+Route::middleware(['guest'])->group(function () {
+    // Halaman login
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('admin.login');
 
-// Halaman login
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    // Halaman register admin
+    Route::get('/register/admin', [AuthController::class, 'showRegisterForm'])->name('admin.register');
+    Route::post('/register/admin', [AuthController::class, 'registerAdmin'])->name('admin.store');
+});
 
-// Rute untuk Register Admin
-Route::get('/register/admin', [AuthController::class, 'showRegisterForm'])->name('admin.register');
-Route::post('/register/admin', [AuthController::class, 'registerAdmin'])->name('admin.store');
+// Logout admin
+Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout')->middleware('auth:admin');
 
-// Rute dengan middleware AuthenticateAdmin
-Route::middleware('App\Http\Middleware\CheckLogin')->group(function () {
-    // Halaman Dashboard
-    Route::get('/dashboard', function () {
-        return view('dashboard/index', ['name' => 'Dashboard']);
-    });
+// ==========================
+// Route Dashboard Admin
+Route::middleware(['auth:admin'])->prefix('dashboard')->group(function () {
+    // Dashboard utama
+    Route::get('/', fn() => view('dashboard.index', ['name' => 'Dashboard']))->name('dashboard.index');
 
     // Halaman profil admin
-    Route::get('/dashboard/profile', [AuthController::class, 'index'])->name('profile');
+    Route::get('/profile', [AuthController::class, 'index'])->name('dashboard.profile');
 
-    // Rute untuk kandidat
-    Route::resource('dashboard/kandidats', KandidatController::class);
+    // Resource route kandidat
+    Route::resource('kandidats', KandidatController::class);
 
-    // Rute untuk pengaturan
-    Route::resource('dashboard/settings', SettingController::class);
-    Route::post('dashboard/admin/store', [SettingController::class, 'store'])->name('admin.store');
+    // Resource route pengaturan
+    Route::resource('settings', SettingController::class);
+    Route::post('/admin/store', [SettingController::class, 'store'])->name('dashboard.admin.store');
 
-    // Rute untuk token
-    Route::get('dashboard/generate', [TokenController::class, 'index'])->name('generate.index');
-    Route::post('dashboard/generate', [TokenController::class, 'store'])->name('generate.store');
-    Route::delete('dashboard/generate/delete-all', [TokenController::class, 'deleteAll'])->name('generate.deleteAll');
+    // Route untuk generate token
+    Route::get('/generate', [TokenController::class, 'index'])->name('dashboard.generate.index');
+    Route::post('/generate', [TokenController::class, 'store'])->name('dashboard.generate.store');
+    Route::delete('/generate/delete-all', [TokenController::class, 'deleteAll'])->name('dashboard.generate.deleteAll');
 
-    // Hasil voting dan penghapusan data
-    Route::get('dashboard/hasil-voting', [PilihController::class, 'hasilVoting'])->name('hasil.voting');
-    Route::delete('dashboard/hapus-data-pemilihan', [PilihController::class, 'hapusSemuaData'])->name('hapus.data.pemilihan');
+    // Route hasil voting dan hapus data pemilihan
+    Route::get('/hasil-voting', [PilihController::class, 'hasilVoting'])->name('dashboard.hasil.voting');
+    Route::delete('/hapus-data-pemilihan', [PilihController::class, 'hapusSemuaData'])->name('dashboard.hapus.data.pemilihan');
 });
 
 // ==========================
-// Rute tanpa middleware
-
-// Fitur pencarian kandidat
+// Fitur Pencarian Kandidat
 Route::get('/kandidat/search', [KandidatController::class, 'search'])->name('kandidat.search');
 
-// Halaman Thanks (jika ingin bebas akses tanpa middleware)
-Route::get('/Thanks', function () {
-    return view('Thanks', ['name' => 'Thanks']);
-})->name('Thanks');
+// ==========================
+// Halaman Thanks
+Route::get('/Thanks', fn() => view('Thanks', ['name' => 'Thanks']))->name('thanks.index');

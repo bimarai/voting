@@ -1,5 +1,6 @@
-@extends('./templates/Header')
-@extends('./templates/Navbar-admin')
+@extends('./templates.Header')
+@extends('./templates.Navbar-admin')
+
 <div class="flex justify-center mt-8 h-[full] lg:h-[100vh]">
     <form action="{{ route('settings.update', $setting->id_setting) }}" method="POST"
         class="w-full bg-white p-6 rounded-lg shadow-md space-y-4 px-[10%]" enctype="multipart/form-data">
@@ -74,14 +75,14 @@
             <!-- Tanggal Awal -->
             <div class="flex flex-col">
                 <label for="tanggal-awal" class="mb-1 text-gray-700 font-semibold">Tanggal Awal</label>
-                <input value="{{ $setting->tgl_awal }}" name="tgl_awal" type="date" id="tanggal-awal"
+                <input value="{{ $setting->tgl_awal }}" name="tgl_awal" type="datetime-local" id="tanggal-awal"
                     class="border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             <!-- Tanggal Akhir -->
             <div class="flex flex-col">
                 <label for="tanggal-akhir" class="mb-1 text-gray-700 font-semibold">Tanggal Akhir</label>
-                <input value="{{ $setting->tgl_akhir }}" name="tgl_akhir" type="date" id="tanggal-akhir"
+                <input value="{{ $setting->tgl_akhir }}" name="tgl_akhir" type="datetime-local" id="tanggal-akhir"
                     class="border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
